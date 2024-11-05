@@ -44,7 +44,6 @@ static void show_Hour(void)
     time(&now);
     timeinfo = localtime(&now);
 
-    printf("Current hour: %d\n", timeinfo->tm_hour);
 }
 
 /*
@@ -154,12 +153,6 @@ void wait_A_Command(void)
         printf(">> ");
         fgets(cmd, MAX_CMD_LEN, stdin);
         cmd[strlen(cmd) - 1] = '\0'; // remove the '\n' character at the end of the string
-
-        if(strcmp(cmd, "now -H")==0)
-        {
-            show_Hour();
-        }
-        
 
         if(strcmp(cmd, "now") == 0)
         {
