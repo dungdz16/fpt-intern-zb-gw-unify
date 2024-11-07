@@ -168,17 +168,18 @@ static void show_Current_Time(void)
 */
 void cmd_Time_Init(void)
 {
-    printf("Command Line Interface is ALL READY\n");
+    printf("Command Line Interface of time is ALL READY\n");
     printf("Supported commands:\n");
-    printf("Struct of command: name_of_group+tab+name_of_atributte\n");
+
     printf("--------------------------------------------------------------\n");
-    printf("    now: show time in format yyyy-MM-dd HH:mm:ss\n");
-    printf("    now     -y: show year\n");
-    printf("    now     -M: show month\n");
-    printf("    now     -d: show day\n");
-    printf("    now     -H: show hour\n");
-    printf("    now     help  : show all supported commands and their description.\n");
-    printf("    q     : exit the program\n");
+    printf("Struct of command: <name_of_group> <name_of_atributte>\n");
+    printf("    now     : show time in format yyyy-MM-dd HH:mm:ss\n");
+    printf("    now -y  : show year\n");
+    printf("    now -M  : show month\n");
+    printf("    now -d  : show day\n");
+    printf("    now -H  : show hour\n");
+    printf("    now help: show all supported commands and their description.\n");
+    printf("    q       : exit the program\n");
     printf("--------------------------------------------------------------\n");
 }
 

@@ -190,10 +190,10 @@ static void parse_command(char *cmd, int *argc, char *argv[])
     char *token;
     int arg_index = 0;
 
-    token = strtok(cmd, "\t");
+    token = strtok(cmd, " ");
     while (token != NULL && arg_index < MAX_ARGS) {
         argv[arg_index++] = token;
-        token = strtok(NULL, "\t");
+        token = strtok(NULL, " ");
     }
     *argc = arg_index;
 }
