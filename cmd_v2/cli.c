@@ -5,8 +5,9 @@
 #include <unistd.h>
 #include <termios.h>
 
-#include "time_t.h"
-#include "cmd.h"
+#include "cli_time.h"
+#include "cli.h"
+#include "error.h"
 
 /*
 *********************************************************************************************************
@@ -25,7 +26,8 @@ struct CommandParams{
 
 /* Supported commands */
 Command commands[] = {
-    {"now", process_Time_Command},
+    {"now", cli_process_time},
+    {"help", cli_show_commands},
     {NULL, NULL}
 };
 
@@ -48,11 +50,33 @@ static struct termios old_termios; // old termios structure
 */
 
 /*
+*********************************************************************************************************
+*                                         STATIC FUNCTION PROTOTYPES
+*********************************************************************************************************
+*/
+
+static cli_Status_t cli_enable_raw_rode( struct termios *old_termios);
+static cli_Status_t cli_disable_raw_mode(struct termios *old_termios);
+static cli_Status_t cli_process(char *cmd);
+static cli_Status_t cli_parse_command(char *cmd, int *argc, char *argv[]);
+static cli_Status_t execute_command(int argc, char *argv[]);
+
+static void clear_line();
+
+
+/*
+*********************************************************************************************************
+*                                         STATIC FUNCTIONS
+*********************************************************************************************************
+*/
+
+
+/*
 * @brief   Enable raw mode for the terminal
 * @param   *old_termios: pointer to the old termios structure
-* @retval  None
+* @retval  cli_Status_t: status of the function
 */
-static void enable_Raw_Mode( struct termios *old_termios)
+static cli_Status_t cli_enable_raw_rode( struct termios *old_termios)
 {
     struct termios raw; // new termios structure
 
@@ -61,39 +85,68 @@ static void enable_Raw_Mode( struct termios *old_termios)
     raw.c_lflag &= ~(ECHO | ICANON); // disable echo (off dislay char) and canonical mode (off wait Enter)
     raw.c_cc[VMIN] = 1; //read 1 character at a time
     raw.c_cc[VTIME] = 0; // no wait time
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw); // set the new termios structure for terminal 
+    
+    // Return error if failed to set the new termios structure
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1) {
+        return ENABLE_RAW_MODE_ERROR;
+    }
+    else {
+        return ENABLE_RAW_MODE;
+    }
+
 }
 
 /*
 * @brief    Disable raw mode for the terminal
 * @param    *old_termios: pointer to the old termios structure
-* @retval   None
+* @retval  cli_Status_t: status of the function
 */
-static void disable_Raw_Mode(struct termios *old_termios)
+static cli_Status_t cli_disable_raw_mode(struct termios *old_termios)
 {
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, old_termios); // set the old termios structure for terminal
+    // Return error if failed to set the old termios structure
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, old_termios) == -1) {
+        return DISABLE_RAW_MODE_ERROR;
+    }
+    else {
+        return DISABLE_RAW_MODE;
+    }
 }
 
 /*
 * @brief Quick command from keyboard
 * @param *cmd: pointer to the command string
-* @retval None
+* @retval cli_Status_t: status of the function
 */
-static void quick_Command(char *cmd)
+static cli_Status_t cli_process(char *cmd)
 {
+    uint8_t reval = 1;
     uint16_t index = 0; // index of the current character in the command string
     uint8_t history_index = history_count; // index of the current command in the history
     int c; // character from keyboard
     char temp_cmd[MAX_CMD_LEN] = {0}; // command string
     int cursor_pos = 0;
 
-    enable_Raw_Mode(&old_termios); // enable raw mode for the terminal
+    if(cli_enable_raw_rode(&old_termios) == ENABLE_RAW_MODE_ERROR)
+    {
+        printf("Error: Failed to enable raw mode\n");
+        return CLI_PROCESS_ERROR;
+    }
 
     printf("> ");
     fflush(stdout);
 
     while (1) {
         c = fgetc(stdin);
+        // check error from keyboard
+        if (c == EOF) {
+            if(cli_disable_raw_mode(&old_termios) == DISABLE_RAW_MODE_ERROR)
+            {
+                printf("Error: Failed to disable raw mode\n");
+                fflush(stdout);
+            }
+            return CLI_PROCESS_ERROR;
+        }
+
         if (c == '\n') {
             temp_cmd[index] = '\0';
             printf("\n");
@@ -143,7 +196,7 @@ static void quick_Command(char *cmd)
             }
         } else if (c == 127 || c == '\b') { // Backspace
             if (cursor_pos > 0) {
-                memmove(&temp_cmd[cursor_pos - 1], &temp_cmd[cursor_pos], index - cursor_pos + 1);
+                memmove(&temp_cmd[cursor_pos - 1], &temp_cmd[cursor_pos], index - cursor_pos + 1);  // move the characters after the cursor to the left 
                 index--;
                 cursor_pos--;
                 clear_line();
@@ -169,23 +222,41 @@ static void quick_Command(char *cmd)
         }
     }
     
-    strcpy(cmd, temp_cmd);
+    if(strcpy(cmd, temp_cmd) == NULL)
+    {
+        printf("Error: Failed to copy command\n");
+        fflush(stdout);
+        reval = 0;
+    }
 
-    disable_Raw_Mode(&old_termios); // disable raw mode for the terminal
+    if(cli_disable_raw_mode(&old_termios) == DISABLE_RAW_MODE_ERROR)
+    {
+        printf("Error: Failed to disable raw mode\n");
+        fflush(stdout);
+        reval = 0;
+    }
 
     if (strlen(cmd) > 0) {
         strcpy(history[history_count % MAX_CMD_COUNT], cmd);
         history_count++;
     }
-    
+
+    if (reval == 0) {
+        return CLI_PROCESS_ERROR;
+    }
+    else {
+        return CLI_PROCESS_OK;
+    }
 }
 
 /*
 * @brief   Parse the command string
 * @param   *cmd: pointer to the command string
 * @param   *argc: pointer to the number of arguments
+* @param   *argv: pointer to the arguments
+* @retval  CLI_PARSE_CMD_OK: if the command is valid  CLI_PARSE_CMD_ERROR: if the command is invalid
 */
-static void parse_command(char *cmd, int *argc, char *argv[])
+static cli_Status_t cli_parse_command(char *cmd, int *argc, char *argv[])
 {
     char *token;
     int arg_index = 0;
@@ -196,6 +267,15 @@ static void parse_command(char *cmd, int *argc, char *argv[])
         token = strtok(NULL, " ");
     }
     *argc = arg_index;
+
+    if(arg_index == 0)
+    {
+        return CLI_PARSE_CMD_ERROR;
+    }
+    else
+    {
+        return CLI_PARSE_CMD_OK;
+    }
 }
 
 /*
@@ -211,11 +291,11 @@ static void clear_line() {
 * @brief   execute the command 
 * @param   argc: number of arguments
 * @param   *argv: pointer to the arguments
-* @retval  None
+* @retval  CLI_EXEC_CMD_OK: if the command is valid  CLI_EXEC_CMD_ERROR: if the command is invalid
 */
-static void execute_command(int argc, char *argv[])
+static cli_Status_t execute_command(int argc, char *argv[])
 {
-    if (argc == 0) return;
+    if (argc == 0) return CLI_EXEC_CMD_ERROR;
 
     CommandParams params;
     memset(&params, 0, sizeof(params));
@@ -240,10 +320,11 @@ static void execute_command(int argc, char *argv[])
             commands[i].handler(&params);
             //printf("huhu");
 
-            return;
+            return CLI_EXEC_CMD_OK;
         }
     }
     printf("Invalid command: %s\n", argv[0]);
+    return CLI_EXEC_CMD_ERROR;
 }
 
 /*
@@ -255,10 +336,11 @@ static void execute_command(int argc, char *argv[])
 /*
 * @brief   Wait for a command from user
 * @param   None
-* @retval  None
+* @retval  CLI_PROCESS_LINE_OK: if the command is valid  CLI_PROCESS_LINE_ERROR: if the command is invalid
 */
-void wait_A_Command(void)
+cli_Status_t cli_process_line(void)
 {
+    uint8_t reval = 1;
     char cmd[MAX_CMD_LEN];
     char *argv[MAX_ARGS];
     int argc;
@@ -266,20 +348,70 @@ void wait_A_Command(void)
     while(1)
     {
 
-        quick_Command(cmd);
-
-        parse_command(cmd, &argc, argv);
-
-        if (argc > 0 && strcmp(argv[0], "q") == 0) {
+        if(cli_process(cmd) == CLI_PROCESS_ERROR)
+        {
+            printf("Error: Failed to process command\n");
+            reval = 0;
+        }else if (cli_parse_command(cmd, &argc, argv) == CLI_PARSE_CMD_ERROR)
+        {
+            printf("Error: Failed to parse command\n");
+            reval = 0;
+        } else if (argc > 0 && strcmp(argv[0], "q") == 0) {
             break;
         }
+        
+        if (execute_command(argc, argv) == CLI_EXEC_CMD_ERROR)
+        {
+            printf("Error: Failed to execute command\n");
+            reval = 0;
+        }
+    }
 
-        execute_command(argc, argv);
+    if (reval == 0) {
+        return CLI_PROCESS_LINE_ERROR;
+    }
+    else {
+        return CLI_PROCESS_LINE_OK;
     }
 
 }
 
 
+/*
+* @brief   Show all of cli command supported
+* @param   commands supported in the lookup table
+* @retval  None
+*/
 
+int cli_show_commands(CommandParams *params) 
+{
+    int i = 0;
+    printf("Supported commands group:\n");
+    printf("-----------------------------------------------------------------------------------------------\n");
+    while (commands[i].name != NULL)
+    {
+        printf("    %s", commands[i].name);
 
+        if(strcmp(commands[i].name, "now") == 0)
+        printf(": supported command group for show time\n");
+        else if(strcmp(commands[i].name, "help") == 0)
+        printf(": show all supported commands\n");
+
+        i++;
+    }
+    printf("    q: exit the program\n");
+    printf("---------------------------------------------------------------------------------------------\n");
+    printf("Please type  <name_of_group> help  to show all supported commands and their description\n");
+    printf("---------------------------------------------------------------------------------------------\n");
+    printf("\n");
+}
+
+/*
+* @brief   Initialize the command line interface
+*/
+
+void cli_init(void)
+{
+    cli_show_commands(NULL);
+}
 

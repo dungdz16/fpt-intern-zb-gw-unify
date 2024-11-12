@@ -1,9 +1,11 @@
-#ifndef __CMD_H__
-#define __CMD_H__
+#ifndef __CLI_H__
+#define __CLI_H__
 
 #include <stdio.h>
 #include <string.h>
 #include <termios.h>
+
+#include "error.h"
 
 
 
@@ -45,54 +47,7 @@ typedef struct {
 
 
 
-/*
-*********************************************************************************************************
-*                                         STATIC FUNCTION PROTOTYPES
-*********************************************************************************************************
-*/
 
-/*
-* @brief   Enable raw mode for the terminal
-* @param   *old_termios: pointer to the old termios structure
-* @retval  None
-*/
-static void enable_Raw_Mode( struct termios *old_termios);
-
-/*
-* @brief    Disable raw mode for the terminal
-* @param    *old_termios: pointer to the old termios structure
-* @retval   None
-*/
-static void disable_Raw_Mode(struct termios *old_termios);
-
-/*
-* @brief Quick command from keyboard
-* @param *cmd: pointer to the command string
-* @retval None
-*/
-static void quick_Command(char *cmd);
-
-/*
-* @brief   Clear the current line
-* @param   None
-* @retval  None
-*/
-static void clear_line();
-
-/*
-* @brief   Parse the command string
-* @param   *cmd: pointer to the command string
-* @param   *argc: pointer to the number of arguments
-*/
-static void parse_command(char *cmd, int *argc, char *argv[]);
-
-/*
-* @brief   execute the command 
-* @param   argc: number of arguments
-* @param   *argv: pointer to the arguments
-* @retval  None
-*/
-static void execute_command(int argc, char *argv[]);
 
 /*
 *********************************************************************************************************
@@ -103,12 +58,19 @@ static void execute_command(int argc, char *argv[]);
 /*
 * @brief   Wait for a command from user
 * @param   None
+* @retval  CLI_PROCESS_LINE_OK: if the command is valid  CLI_PROCESS_LINE_ERROR: if the command is invalid
+*/
+cli_Status_t cli_process_line(void);
+
+/*
+* @brief   Show all of cli command supported
+* @param   commands supported in the lookup table
 * @retval  None
 */
-void wait_A_Command(void);
 
+int cli_show_commands(CommandParams *params);
 
+void cli_init(void);
 
-
-#endif // __CMD_H__
+#endif // __CLI_H__
 

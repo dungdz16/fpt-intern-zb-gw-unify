@@ -10,8 +10,8 @@
 #include <time.h>
 #include <stdint.h>
 
-#include "time_t.h"
-#include "cmd.h"
+#include "cli_time.h"
+#include "cli.h"
 
 /*
 ******************************************************************************
@@ -20,6 +20,7 @@
 */
 
 #define DEFAULT_TIME_ZONE 7
+#define PRINTF_TIME_COMMAND_INVALID printf("Invalid command\n");
 
 /*
 ******************************************************************************
@@ -33,12 +34,27 @@
 ******************************************************************************
 */
 
+static void convert_to_default_time_zone(struct tm *timeinfo);
+static void cli_process_time_show_hour(void);
+static void cli_process_time_show_day(void);
+static void cli_process_time_show_month(void);
+static void cli_process_time_cli_process_time_show_year(void);
+static void cli_process_time_show_current_time(void);
+
+
+/*
+******************************************************************************
+*                           LOCAL FUNCTIONS
+******************************************************************************
+*/
+
+
 /*
 * @brief   Convert the current time to UTC + Default time zone
 * @param   *timeinfo: pointer to the time structure
 * @retval  None
 */
-static void convert_To_Default_Time_Zone(struct tm *timeinfo)
+static void convert_to_default_time_zone(struct tm *timeinfo)
 {
     timeinfo-> tm_hour += DEFAULT_TIME_ZONE;
     if(timeinfo->tm_hour >= 24)
@@ -65,7 +81,7 @@ static void convert_To_Default_Time_Zone(struct tm *timeinfo)
 * @param   None
 * @retval  None
 */
-static void show_Hour(void)
+static void cli_process_time_show_hour(void)
 {
     time_t now;                                              
     struct tm *timeinfo;                                   
@@ -73,7 +89,7 @@ static void show_Hour(void)
     time(&now);
     timeinfo = localtime(&now);
 
-    convert_To_Default_Time_Zone(timeinfo);
+    convert_to_default_time_zone(timeinfo);
 
     printf("Current hour: %d\n", timeinfo->tm_hour);
 
@@ -84,7 +100,7 @@ static void show_Hour(void)
 * @param   None
 * @retval  None
 */
-static void show_Day(void)
+static void cli_process_time_show_day(void)
 {
     time_t now;                          
     struct tm *timeinfo;
@@ -92,7 +108,7 @@ static void show_Day(void)
     time(&now);
     timeinfo = localtime(&now);
 
-    convert_To_Default_Time_Zone(timeinfo);
+    convert_to_default_time_zone(timeinfo);
 
     printf("Current day: %d\n", timeinfo->tm_mday);
 }
@@ -102,7 +118,7 @@ static void show_Day(void)
 * @param   None
 * @retval  None
 */
-static void show_Month(void)
+static void cli_process_time_show_month(void)
 {
     time_t now;                          
     struct tm *timeinfo;
@@ -110,7 +126,7 @@ static void show_Month(void)
     time(&now);
     timeinfo = localtime(&now);
 
-    convert_To_Default_Time_Zone(timeinfo);
+    convert_to_default_time_zone(timeinfo);
 
     printf("Current month: %d\n", timeinfo->tm_mon + 1);
 }
@@ -120,7 +136,7 @@ static void show_Month(void)
 * @param   None
 * @retval  None
 */
-static void show_Year(void)
+static void cli_process_time_show_year(void)
 {
     time_t now;                          
     struct tm *timeinfo;
@@ -128,7 +144,7 @@ static void show_Year(void)
     time(&now);
     timeinfo = localtime(&now);
 
-    convert_To_Default_Time_Zone(timeinfo);
+    convert_to_default_time_zone(timeinfo);
 
     printf("Current year: %d\n", timeinfo->tm_year + 1900);
 }
@@ -138,7 +154,7 @@ static void show_Year(void)
 * @param   None
 * @retval  None
 */
-static void show_Current_Time(void)
+static void cli_process_time_show_current_time(void)
 {
     time_t now;                          
     struct tm *timeinfo;
@@ -146,7 +162,7 @@ static void show_Current_Time(void)
     time(&now);
     timeinfo = localtime(&now);
 
-    convert_To_Default_Time_Zone(timeinfo);
+    convert_to_default_time_zone(timeinfo);
 
     printf("Current time: %s", asctime(timeinfo));
 }
@@ -179,42 +195,44 @@ void cmd_Time_Init(void)
     printf("    now -d  : show day\n");
     printf("    now -H  : show hour\n");
     printf("    now help: show all supported commands and their description.\n");
+    printf("    help    : show all supported commands\n");
     printf("    q       : exit the program\n");
     printf("--------------------------------------------------------------\n");
+    printf("\n");
 }
 
 /*
 * @brief  Process the time command
 * @param  *cmd: pointer to the command string
-* @retval result: 1 if the command is valid, 0 if the command is invalid
+* @retval CLI_PROCESS_TIME_OK: if the command is valid, CLI_PROCESS_TIME_ERROR: if the command is invalid
 */
 
-int process_Time_Command(CommandParams *params)
+int cli_process_time(CommandParams *params)
 {
     uint8_t result = 1;
     // printf(" argc = %d\n", params->argc);
     // printf(" argv[1] = %s\n", params->argv[1]);
     if(params->argc == 1)
     {
-        show_Current_Time();
+        cli_process_time_show_current_time();
     }
     else if(params->argc == 2)
     {
         if(strcmp(params->argv[1], "-y") == 0)
         {
-            show_Year();
+            cli_process_time_show_year();
         }
         else if(strcmp(params->argv[1], "-M") == 0)
         {
-            show_Month();
+            cli_process_time_show_month();
         }
         else if(strcmp(params->argv[1], "-d") == 0)
         {
-            show_Day();
+            cli_process_time_show_day();
         }
         else if(strcmp(params->argv[1], "-H") == 0)
         {
-            show_Hour();
+            cli_process_time_show_hour();
         }
         else if(strcmp(params->argv[1], "help") == 0)
         {
@@ -222,14 +240,23 @@ int process_Time_Command(CommandParams *params)
         }
         else
         {
+            printf("Invalid command: %s\n", params->argv[1]);
             result = 0;
         }
     }
     else
-    {
+    {   
+        printf("Invalid command\n");
         result = 0;
     }
 
-    return result;
+    if (result == 1)
+    {
+        return CLI_PROCESS_TIME_OK;
+    }
+    else
+    {
+        return CLI_PROCESS_TIME_ERROR;
+    }
 }
 

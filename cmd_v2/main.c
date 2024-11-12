@@ -8,17 +8,20 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "time_t.h"
-#include "cmd.h"
+#include "cli_time.h"
+#include "cli.h"
 
 
 void main( int argc, char *argv[] )
 {
-    cmd_Time_Init();
+    cli_init();
 
     printf("Main program is running\n");
 
-    wait_A_Command();
+    if(cli_process_line() == CLI_PROCESS_LINE_ERROR)
+    {
+        printf("Error: Failed to process command\n");
+    }
 }
 
 
