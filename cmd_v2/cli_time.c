@@ -194,7 +194,7 @@ void cmd_Time_Init(void)
     printf("    now -M  : show month\n");
     printf("    now -d  : show day\n");
     printf("    now -H  : show hour\n");
-    printf("    now help: show all supported commands and their description.\n");
+    printf("    now help: show all time supported commands and their description.\n");
     printf("    help    : show all supported commands\n");
     printf("    q       : exit the program\n");
     printf("--------------------------------------------------------------\n");

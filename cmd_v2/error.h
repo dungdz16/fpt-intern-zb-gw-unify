@@ -6,12 +6,16 @@
 
 typedef enum{
     ERROR_NONE = 0,
+    
     ERROR_INVALID_VALUE,            // error for cli_Parse_Uint16, cli_Parse_Int16, cli_Parse_Uint8, cli_Parse_Int8, ...
     ERROR_VALID_VALUE_OK,           // error for cli_Parse_Uint16, cli_Parse_Int16, cli_Parse_Uint8, cli_Parse_Int8, ...
+    
     ENABLE_RAW_MODE_ERROR,          // error for cli_Enable_Raw_Mode
     ENABLE_RAW_MODE,
+    
     DISABLE_RAW_MODE_ERROR,         // error for cli_Disable_Raw_Mode
     DISABLE_RAW_MODE,
+    
     CLI_PROCESS_ERROR,              // error for cli_Process
     CLI_PROCESS_OK,
 

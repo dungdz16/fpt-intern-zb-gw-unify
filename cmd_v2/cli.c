@@ -15,14 +15,14 @@
 *********************************************************************************************************
 */
 
-// Command parameters, thia structure can be extended with more parameters if needed 
-struct CommandParams{
-    int argc;
-    char *argv[MAX_ARGS];
-    char *string_param_1;
-    char *string_param_2;
-    char char_param;
-};
+// // Command parameters, thia structure can be extended with more parameters if needed 
+// struct CommandParams{
+//     int argc;
+//     char *argv[MAX_ARGS];
+//     char *string_param_1;
+//     char *string_param_2;q
+//     char char_param;
+// };
 
 /* Supported commands */
 Command commands[] = {
