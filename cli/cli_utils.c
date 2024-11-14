@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
+// #include "common/error.h"
 #include "cli_utils.h"
 #include "cli.h"
 #include "error.h"
@@ -19,7 +20,7 @@
 * @retval   ERROR_INVALID_VALUE: if the command is invalid  ERROR_VALID_VALUE_OK: if the command is valid
 */
 
-cli_Status_t cli_parse_int8(char *cmd, int8_t *value)
+cli_status_t cli_parse_int8(char *cmd, int8_t *value)
 {
     int8_t result = 1;  // default is valid command
     int8_t sign = 1;    // default is positive number
@@ -77,7 +78,7 @@ cli_Status_t cli_parse_int8(char *cmd, int8_t *value)
 * @retval  ERROR_INVALID_VALUE: if the command is invalid  ERROR_VALID_VALUE_OK: if the command is valid
 */
 
-cli_Status_t cli_parse_uint8(char *cmd, uint8_t *value)
+cli_status_t cli_parse_uint8(char *cmd, uint8_t *value)
 {
     int8_t result = 1;  // default is valid command
     uint16_t val = 0;   // default value is 0, use uint16_t to avoid overflow
@@ -126,7 +127,7 @@ cli_Status_t cli_parse_uint8(char *cmd, uint8_t *value)
 * @retval  ERROR_INVALID_VALUE: if the command is invalid  ERROR_VALID_VALUE_OK: if the command is valid
 */
 
-cli_Status_t cli_parse_int16(char *cmd, int16_t *value)
+cli_status_t cli_parse_int16(char *cmd, int16_t *value)
 {
     int8_t result = 1;  // default is valid command
     int8_t sign = 1;    // default is positive number
@@ -184,7 +185,7 @@ cli_Status_t cli_parse_int16(char *cmd, int16_t *value)
 * @retval  ERROR_INVALID_VALUE: if the command is invalid  ERROR_VALID_VALUE_OK: if the command is valid
 */
 
-cli_Status_t cli_parse_uint16(char *cmd, uint16_t *value)
+cli_status_t cli_parse_uint16(char *cmd, uint16_t *value)
 {
     int8_t result = 1;  // default is valid command
     uint32_t val = 0;   // default value is 0, use uint32_t to avoid overflow
@@ -233,7 +234,7 @@ cli_Status_t cli_parse_uint16(char *cmd, uint16_t *value)
 * @retval  ERROR_INVALID_VALUE: if the command is invalid  ERROR_VALID_VALUE_OK: if the command is valid
 */
 
-cli_Status_t cli_parse_int32(char *cmd, int32_t *value)
+cli_status_t cli_parse_int32(char *cmd, int32_t *value)
 {
     int8_t result = 1;  // default is valid command
     int8_t sign = 1;    // default is positive number
@@ -291,7 +292,7 @@ cli_Status_t cli_parse_int32(char *cmd, int32_t *value)
 * @retval  ERROR_INVALID_VALUE: if the command is invalid  ERROR_VALID_VALUE_OK: if the command is valid
 */
 
-cli_Status_t cli_parse_uint32(char *cmd, uint32_t *value)
+cli_status_t cli_parse_uint32(char *cmd, uint32_t *value)
 {
     int8_t result = 1;  // default is valid command
     uint64_t val = 0;   // default value is 0, use uint64_t to avoid overflow

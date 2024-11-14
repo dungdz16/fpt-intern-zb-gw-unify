@@ -20,7 +20,7 @@ void main( int argc, char *argv[] )
 
     if(cli_process_line() == CLI_PROCESS_LINE_ERROR)
     {
-        printf("Error: Failed to process command\n");
+        printf("Error: Failed to process command line\n");
     }
 }
 

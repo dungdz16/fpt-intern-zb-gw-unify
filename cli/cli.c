@@ -5,9 +5,9 @@
 #include <unistd.h>
 #include <termios.h>
 
+#include "error.h"
 #include "cli_time.h"
 #include "cli.h"
-#include "error.h"
 
 /*
 *********************************************************************************************************
@@ -55,11 +55,11 @@ static struct termios old_termios; // old termios structure
 *********************************************************************************************************
 */
 
-static cli_Status_t cli_enable_raw_rode( struct termios *old_termios);
-static cli_Status_t cli_disable_raw_mode(struct termios *old_termios);
-static cli_Status_t cli_process(char *cmd);
-static cli_Status_t cli_parse_command(char *cmd, int *argc, char *argv[]);
-static cli_Status_t execute_command(int argc, char *argv[]);
+static cli_status_t cli_enable_raw_rode( struct termios *old_termios);
+static cli_status_t cli_disable_raw_mode(struct termios *old_termios);
+static cli_status_t cli_process(char *cmd);
+static cli_status_t cli_parse_command(char *cmd, int *argc, char *argv[]);
+static cli_status_t cli_execute_command(int argc, char *argv[]);
 
 static void clear_line();
 
@@ -74,9 +74,9 @@ static void clear_line();
 /*
 * @brief   Enable raw mode for the terminal
 * @param   *old_termios: pointer to the old termios structure
-* @retval  cli_Status_t: status of the function
+* @retval  cli_status_t: status of the function
 */
-static cli_Status_t cli_enable_raw_rode( struct termios *old_termios)
+static cli_status_t cli_enable_raw_rode( struct termios *old_termios)
 {
     struct termios raw; // new termios structure
 
@@ -99,9 +99,9 @@ static cli_Status_t cli_enable_raw_rode( struct termios *old_termios)
 /*
 * @brief    Disable raw mode for the terminal
 * @param    *old_termios: pointer to the old termios structure
-* @retval  cli_Status_t: status of the function
+* @retval  cli_status_t: status of the function
 */
-static cli_Status_t cli_disable_raw_mode(struct termios *old_termios)
+static cli_status_t cli_disable_raw_mode(struct termios *old_termios)
 {
     // Return error if failed to set the old termios structure
     if (tcsetattr(STDIN_FILENO, TCSAFLUSH, old_termios) == -1) {
@@ -115,9 +115,9 @@ static cli_Status_t cli_disable_raw_mode(struct termios *old_termios)
 /*
 * @brief Quick command from keyboard
 * @param *cmd: pointer to the command string
-* @retval cli_Status_t: status of the function
+* @retval cli_status_t: status of the function
 */
-static cli_Status_t cli_process(char *cmd)
+static cli_status_t cli_process(char *cmd)
 {
     uint8_t reval = 1;
     uint16_t index = 0; // index of the current character in the command string
@@ -256,10 +256,17 @@ static cli_Status_t cli_process(char *cmd)
 * @param   *argv: pointer to the arguments
 * @retval  CLI_PARSE_CMD_OK: if the command is valid  CLI_PARSE_CMD_ERROR: if the command is invalid
 */
-static cli_Status_t cli_parse_command(char *cmd, int *argc, char *argv[])
+static cli_status_t cli_parse_command(char *cmd, int *argc, char *argv[])
 {
     char *token;
     int arg_index = 0;
+
+    // Trim leading and trailing whitespace if no command 
+    while (isspace((unsigned char)*cmd)) cmd++;
+    if (*cmd == 0) {
+        *argc = 0;
+        return CLI_PARSE_CMD_NO_CMD; 
+    }
 
     token = strtok(cmd, " ");
     while (token != NULL && arg_index < MAX_ARGS) {
@@ -268,14 +275,12 @@ static cli_Status_t cli_parse_command(char *cmd, int *argc, char *argv[])
     }
     *argc = arg_index;
 
-    if(arg_index == 0)
-    {
-        return CLI_PARSE_CMD_ERROR;
-    }
-    else
-    {
-        return CLI_PARSE_CMD_OK;
-    }
+    // if(arg_index == 0 && strcmp(argv[0], "q") == 0)
+    // {
+    //     return CLI_PARSE_CMD_ERROR;
+    // }
+        
+    return CLI_PARSE_CMD_OK;
 }
 
 /*
@@ -293,9 +298,9 @@ static void clear_line() {
 * @param   *argv: pointer to the arguments
 * @retval  CLI_EXEC_CMD_OK: if the command is valid  CLI_EXEC_CMD_ERROR: if the command is invalid
 */
-static cli_Status_t execute_command(int argc, char *argv[])
+static cli_status_t cli_execute_command(int argc, char *argv[])
 {
-    if (argc == 0) return CLI_EXEC_CMD_ERROR;
+    // if (argc == 0) return CLI_EXEC_CMD_ERROR;
 
     CommandParams params;
     memset(&params, 0, sizeof(params));
@@ -324,6 +329,7 @@ static cli_Status_t execute_command(int argc, char *argv[])
         }
     }
     printf("Invalid command: %s\n", argv[0]);
+    printf("Please type 'help' to show all supported commands\n");
     return CLI_EXEC_CMD_ERROR;
 }
 
@@ -338,7 +344,7 @@ static cli_Status_t execute_command(int argc, char *argv[])
 * @param   None
 * @retval  CLI_PROCESS_LINE_OK: if the command is valid  CLI_PROCESS_LINE_ERROR: if the command is invalid
 */
-cli_Status_t cli_process_line(void)
+cli_status_t cli_process_line(void)
 {
     uint8_t reval = 1;
     char cmd[MAX_CMD_LEN];
@@ -347,24 +353,39 @@ cli_Status_t cli_process_line(void)
 
     while(1)
     {
-
         if(cli_process(cmd) == CLI_PROCESS_ERROR)
         {
             printf("Error: Failed to process command\n");
             reval = 0;
-        }else if (cli_parse_command(cmd, &argc, argv) == CLI_PARSE_CMD_ERROR)
-        {
-            printf("Error: Failed to parse command\n");
-            reval = 0;
-        } else if (argc > 0 && strcmp(argv[0], "q") == 0) {
-            break;
-        }
+            continue;
+        } 
+        uint8_t result_cli_parse_command = cli_parse_command(cmd, &argc, argv);
         
-        if (execute_command(argc, argv) == CLI_EXEC_CMD_ERROR)
-        {
-            printf("Error: Failed to execute command\n");
-            reval = 0;
-        }
+            if (result_cli_parse_command == CLI_PARSE_CMD_OK)
+            {
+                // Kiểm tra lệnh 'q' sau khi phân tích lệnh
+                if (strcmp(argv[0], "q") == 0)
+                {   
+                    reval = 1;
+                    break; // Thoát khỏi vòng lặp
+                }
+                if (cli_execute_command(argc, argv) == CLI_EXEC_CMD_ERROR)
+                {
+                    // printf("sao lai nhay vao day\n");
+                    reval = 0;
+                }
+                else
+                {
+                    reval = 1;
+                }
+            } 
+            else if (result_cli_parse_command == CLI_PARSE_CMD_NO_CMD)
+            {
+                reval = 1;
+            }
+
+        
+
     }
 
     if (reval == 0) {

@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "error.h": "c",
+        "cli_time.h": "c"
+    },
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/common",
+        "${workspaceFolder}/cli",
+        "${workspaceFolder}/**"
+    ],
+    "C_Cpp.default.intelliSenseMode": "gcc-x64",
+    "C_Cpp.default.compilerPath": "/usr/bin/gcc"
+}

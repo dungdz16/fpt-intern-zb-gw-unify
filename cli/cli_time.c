@@ -10,6 +10,7 @@
 #include <time.h>
 #include <stdint.h>
 
+// #include "common/error.h"
 #include "cli_time.h"
 #include "cli.h"
 

@@ -21,6 +21,7 @@ typedef enum{
 
     CLI_PARSE_CMD_ERROR,            // error for cli_Parse_Command
     CLI_PARSE_CMD_OK, 
+    CLI_PARSE_CMD_NO_CMD,          
 
     CLI_EXEC_CMD_ERROR,             // error for cli_Exec_Command
     CLI_EXEC_CMD_OK,
@@ -31,7 +32,7 @@ typedef enum{
     CLI_PROCESS_TIME_ERROR,         // error for cli_Process_Time
     CLI_PROCESS_TIME_OK
 
-} cli_Status_t;
+} cli_status_t;
 
 
 

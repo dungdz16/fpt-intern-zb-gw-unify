@@ -60,7 +60,7 @@ typedef struct {
 * @param   None
 * @retval  CLI_PROCESS_LINE_OK: if the command is valid  CLI_PROCESS_LINE_ERROR: if the command is invalid
 */
-cli_Status_t cli_process_line(void);
+cli_status_t cli_process_line(void);
 
 /*
 * @brief   Show all of cli command supported
