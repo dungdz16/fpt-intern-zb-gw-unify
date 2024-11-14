@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Navigate to the build folder
+cd /home/dungdz/fpt-intern-zb-gw-unify/build || { echo "Build folder not found"; exit 1; }
+
+# Check if zb-gw-unify exists and run it
+if [ -f zb-gw-unify ]; then
+    ./zb-gw-unify
+else
+    echo "zb-gw-unify not found"
+    exit 1
+fi
